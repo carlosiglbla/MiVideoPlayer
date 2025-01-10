@@ -5,6 +5,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.MotionEvent;
+import android.view.ViewGroup;
 import android.widget.MediaController;
 import android.widget.VideoView;
 
@@ -42,16 +43,42 @@ public class MainActivity extends AppCompatActivity implements MediaController.M
         videoView.setMediaController(mc);
         //Cargar el contenido multimedia en el videoview
         videoView.setVideoURI(Uri.parse("android.resource://"+getPackageName()+"/"+R.raw.ski));
+        videoView.setVideoURI(Uri.parse("android.resource://"+getPackageName()+"/"+R.raw.carretera));
         //streaming http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" "
         //videoView.setVideoURI(Uri.parse("https://www.sample-videos.com/video321/mp4/720/big_buck_bunny_720p_1mb.mp4"));
-        videoView.setVideoURI(Uri.parse("https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/1080/Big_Buck_Bunny_1080_10s_30MB.mp4"));
+        //videoView.setVideoURI(Uri.parse("https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/1080/Big_Buck_Bunny_1080_10s_30MB.mp4"));
         h=new Handler();
         // Registramos el callback que será invocado cuando el vídeo esté cargado y preparado
         // Lo hacemos una vez que esté cargado, y que sea de manera asíncrona para mejorar el rendimiento
         // Cuando termina la preparación de los medios, se llama al metodo onPrepared() de MediaPlayer.OnPreparedListener,
         // que se configuró a través de setOnPreparedListener().
         videoView.setOnPreparedListener(mediaPlayer -> h.post(() -> {
-            mc.show(0);
+            //Ajustar la relación de aspecto
+            int videoWidth = mediaPlayer.getVideoWidth();
+            int videoHeight = mediaPlayer.getVideoHeight();
+
+            // Obtener las dimensiones de la pantalla
+            int screenWidth = getResources().getDisplayMetrics().widthPixels;
+            int screenHeight = getResources().getDisplayMetrics().heightPixels;
+
+            // Calcular la relación de aspecto
+            float videoAspectRatio = (float) videoWidth / videoHeight;
+            float screenAspectRatio = (float) screenWidth / screenHeight;
+
+            ViewGroup.LayoutParams layoutParams = videoView.getLayoutParams();
+
+            if (videoAspectRatio > screenAspectRatio) {
+                // Ajustar el ancho al máximo disponible
+                layoutParams.width = screenWidth;
+                layoutParams.height = (int) (screenWidth / videoAspectRatio);
+            } else {
+                // Ajustar la altura al máximo disponible
+                layoutParams.width = (int) (screenHeight * videoAspectRatio);
+                layoutParams.height = screenHeight;
+            }
+
+            videoView.setLayoutParams(layoutParams);
+            mc.show(1000);
             videoView.start();
         }));
     }
